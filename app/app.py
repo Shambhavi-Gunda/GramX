@@ -1,6 +1,9 @@
-from fastapi import FastAPI,HTTPException
+from fastapi import FastAPI, HTTPException
+from typing import Optional
+from app.schemas import PostCreate
 
 app = FastAPI()
+
 text_posts = {
     1: {"title": "New Post", "content": "Cool test post"},
     2: {"title": "Python Tip", "content": "Use list comprehensions for cleaner loops."},
@@ -14,17 +17,21 @@ text_posts = {
     10: {"title": "Mini Announcement", "content": "New video drops tomorrow covering the weirdest Python features!"}
 }
 
-# this API is designed to handle data; accepting requests from the frontend or client and returning responses
-
-# endpoint
-text_posts = {1:{"title":"New Post","content":"cool test post"}}
-
 @app.get("/posts")
-def get_all_posts():
+def get_all_posts(limit: Optional[int] = None):
+    if limit:
+        return list(text_posts.values())[:limit]
     return text_posts
 
 @app.get("/posts/{id}")
 def get_post(id: int):
     if id not in text_posts:
-        raise HTTPException(status_code=404,detail="Post not found ")
-    return text_posts.get(id)
+        raise HTTPException(status_code=404, detail="Post not found")
+    return text_posts[id]
+
+@app.post("/posts")
+def create_post(post: PostCreate):
+    new_post = {"title": post.title, "content": post.content}
+    new_id = max(text_posts.keys()) + 1
+    text_posts[new_id] = new_post
+    return new_post
