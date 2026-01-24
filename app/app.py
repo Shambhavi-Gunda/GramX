@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Depends
 from contextlib import asynccontextmanager
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from app.db import create_db_and_tables, get_async_session, Post
 from app.imagekit import imagekit
 from app.schemas import UserRead, UserCreate, UserUpdate
@@ -9,6 +10,8 @@ import shutil
 import tempfile
 import os
 from app.users import auth_backend, current_active_user, fastapi_users
+from fastapi.middleware.cors import CORSMiddleware
+from app.db import User 
 
 
 @asynccontextmanager
@@ -18,6 +21,20 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+# ---------------- CORS ----------------
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ---------------- AUTH ROUTERS ----------------
 
 app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"])
 app.include_router(fastapi_users.get_register_router(UserRead, UserCreate), prefix="/auth", tags=["auth"])
@@ -53,11 +70,11 @@ async def upload_file(
             raise HTTPException(status_code=500, detail="ImageKit upload failed")
 
         post = Post(
+            user_id=user.id,
             caption=caption,
             url=result.url,
             file_type="video" if file.content_type.startswith("video") else "image",
             file_name=result.name,
-            user_id=user.id
         )
 
         session.add(post)
@@ -73,9 +90,6 @@ async def upload_file(
             "created_at": post.created_at.isoformat()
         }
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
     finally:
         if temp_path and os.path.exists(temp_path):
             os.unlink(temp_path)
@@ -86,10 +100,13 @@ async def upload_file(
 
 @app.get("/feed")
 async def get_feed(
-    session: AsyncSession = Depends(get_async_session)
+    session: AsyncSession = Depends(get_async_session),
+    user=Depends(current_active_user)
 ):
     result = await session.execute(
-        select(Post).order_by(Post.created_at.desc())
+        select(Post)
+        .options(selectinload(Post.user))
+        .order_by(Post.created_at.desc())
     )
 
     posts = result.scalars().all()
@@ -98,11 +115,14 @@ async def get_feed(
         "posts": [
             {
                 "id": post.id,
+                "user_id": str(post.user_id),
                 "caption": post.caption,
                 "url": post.url,
                 "file_type": post.file_type,
                 "file_name": post.file_name,
-                "created_at": post.created_at.isoformat()
+                "created_at": post.created_at.isoformat(),
+                "is_owner": post.user_id == user.id,
+                "email": post.user.email if post.user else None
             }
             for post in posts
         ]
