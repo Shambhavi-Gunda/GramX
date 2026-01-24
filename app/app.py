@@ -4,14 +4,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import create_db_and_tables, get_async_session, Post
 from app.imagekit import imagekit
-
+from app.schemas import UserRead, UserCreate, UserUpdate
 import shutil
 import tempfile
 import os
-
-from fastapi import Path
-import uuid
-
+from app.users import auth_backend, current_active_user, fastapi_users
 
 
 @asynccontextmanager
@@ -22,6 +19,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"])
+app.include_router(fastapi_users.get_register_router(UserRead, UserCreate), prefix="/auth", tags=["auth"])
+app.include_router(fastapi_users.get_reset_password_router(), prefix="/auth", tags=["auth"])
+app.include_router(fastapi_users.get_verify_router(UserRead), prefix="/auth", tags=["auth"])
+app.include_router(fastapi_users.get_users_router(UserRead, UserUpdate), prefix="/users", tags=["users"])
+
 
 # ---------------- UPLOAD ----------------
 
@@ -29,7 +32,8 @@ app = FastAPI(lifespan=lifespan)
 async def upload_file(
     file: UploadFile = File(...),
     caption: str = Form(""),
-    session: AsyncSession = Depends(get_async_session)
+    session: AsyncSession = Depends(get_async_session),
+    user=Depends(current_active_user)
 ):
     temp_path = None
 
@@ -52,7 +56,8 @@ async def upload_file(
             caption=caption,
             url=result.url,
             file_type="video" if file.content_type.startswith("video") else "image",
-            file_name=result.name
+            file_name=result.name,
+            user_id=user.id
         )
 
         session.add(post)
@@ -103,25 +108,28 @@ async def get_feed(
         ]
     }
 
+
+# ---------------- DELETE ----------------
+
 @app.delete("/posts/{post_id}")
 async def delete_post(
     post_id: str,
     session: AsyncSession = Depends(get_async_session),
+    user=Depends(current_active_user)
 ):
-    try:
-        result = await session.execute(
-            select(Post).where(Post.id == post_id)
-        )
+    result = await session.execute(
+        select(Post).where(Post.id == post_id)
+    )
 
-        post = result.scalar_one_or_none()
+    post = result.scalar_one_or_none()
 
-        if not post:
-            raise HTTPException(status_code=404, detail="Post not found")
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
 
-        await session.delete(post)
-        await session.commit()
+    if post.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Not allowed")
 
-        return {"success": True, "message": "Post deleted successfully"}
+    await session.delete(post)
+    await session.commit()
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"success": True, "message": "Post deleted successfully"}
