@@ -3,18 +3,20 @@ import requests
 import base64
 import urllib.parse
 
+# ---------------- CONFIG ----------------
 st.set_page_config(page_title="Simple Social", layout="wide")
 st.success("✅ Streamlit frontend loaded")
 
 BASE_URL = "http://127.0.0.1:8001"
 
-# Initialize session state
+# ---------------- SESSION ----------------
 if "token" not in st.session_state:
     st.session_state.token = None
 if "user" not in st.session_state:
     st.session_state.user = None
 
 
+# ---------------- HELPERS ----------------
 def get_headers():
     if st.session_state.token:
         return {"Authorization": f"Bearer {st.session_state.token}"}
@@ -30,7 +32,7 @@ def safe_request(method, url, **kwargs):
         st.stop()
 
 
-# -------------------- LOGIN PAGE --------------------
+# ---------------- LOGIN ----------------
 def login_page():
     st.title("🚀 Welcome to Simple Social")
 
@@ -81,7 +83,7 @@ def login_page():
         st.info("Enter your email and password above")
 
 
-# -------------------- UPLOAD PAGE --------------------
+# ---------------- UPLOAD ----------------
 def upload_page():
     st.title("📸 Share Something")
 
@@ -114,7 +116,7 @@ def upload_page():
                 st.error("Upload failed")
 
 
-# -------------------- IMAGE TRANSFORM --------------------
+# ---------------- IMAGE TRANSFORM ----------------
 def encode_text_for_overlay(text):
     return urllib.parse.quote(
         base64.b64encode(text.encode("utf-8")).decode("utf-8")
@@ -132,7 +134,7 @@ def create_transformed_url(original_url, caption=None):
     return f"{'/'.join(parts[:4])}/tr:{overlay}/{'/'.join(parts[4:])}"
 
 
-# -------------------- FEED PAGE --------------------
+# ---------------- FEED ----------------
 def feed_page():
     st.title("🏠 Feed")
 
@@ -150,10 +152,13 @@ def feed_page():
 
     for post in posts:
         st.markdown("---")
-        col1, col2 = st.columns([5, 1])
 
+        # ✅ CORRECT EMAIL DISPLAY
+        uploader_email = post.get("email") or "Unknown User"
+
+        col1, col2 = st.columns([5, 1])
         with col1:
-            st.markdown(f"**{post['email']}** • {post['created_at'][:10]}")
+            st.markdown(f"**{uploader_email}** • {post['created_at'][:10]}")
 
         with col2:
             if post.get("is_owner"):
@@ -166,19 +171,25 @@ def feed_page():
                     st.rerun()
 
         caption = post.get("caption", "")
+        media_url = post.get("url", "")
 
-        # Images: show transformed
+        # ---------- CRASH PROTECTION ----------
+        if not media_url or media_url == "dummy_url":
+            st.warning("⚠️ Media unavailable for this post")
+            continue
+
+        # ---------- IMAGE ----------
         if post["file_type"] == "image":
-            st.image(create_transformed_url(post["url"], caption), width=300)
+            st.image(create_transformed_url(media_url, caption), width=300)
 
-        # Videos: show original URL ONLY (important fix)
+        # ---------- VIDEO ----------
         else:
-            st.video(post["url"])
+            st.video(media_url)
             if caption:
                 st.caption(caption)
 
 
-# -------------------- MAIN ROUTER --------------------
+# ---------------- MAIN ROUTER ----------------
 if st.session_state.user is None:
     login_page()
 else:
