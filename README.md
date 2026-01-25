@@ -1,89 +1,183 @@
-# GramX
 
-GramX is a simple Instagram-like social media backend built using **FastAPI**.
-The project focuses on core social media features such as user interactions, posts, and feeds, while following clean API design and scalable backend practices.
-
-This project is being developed incrementally to strengthen backend development skills and maintain consistent GitHub contributions.
 
 ---
 
-## 🚀 Features (Planned & In Progress)
+# 🚀 gramX – Full Stack Social Media Application
 
-* User authentication (signup & login)
-* Create and fetch posts
-* User feed (similar to Instagram timeline)
-* Like and comment functionality
-* Secure and scalable API design
+**gramX** is a **full-stack social media platform** built using **FastAPI (backend)** and **Streamlit (frontend)** that allows users to **sign up, log in, upload images & videos, view a live feed, and manage their posts**.
+
+This project demonstrates **end-to-end full-stack development**, including API design, authentication, cloud media handling, and frontend–backend integration.
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ Features
 
-* **Backend Framework:** FastAPI
-* **Language:** Python
-* **Server:** Uvicorn
-* **Version Control:** Git & GitHub
+* 🔐 JWT Authentication (Login & Signup)
+* 👤 User Management
+* 📸 Image & Video Upload
+* 🖼️ Real-time Feed Display
+* 🗑️ Delete Own Posts
+* 🧠 Session-based Login Handling
+* 🌐 RESTful APIs using FastAPI
+* ⚡ Interactive UI using Streamlit
+* ☁️ ImageKit Cloud Storage Integration
+* 🗃️ Async SQLAlchemy Database
+
+---
+
+## 🏗️ Tech Stack
+
+### Backend
+
+* FastAPI
+* SQLAlchemy (Async)
+* FastAPI Users (Authentication)
+* SQLite
+* ImageKit
+
+### Frontend
+
+* Streamlit
+* Requests
 
 ---
 
 ## 📁 Project Structure
 
 ```
-GramX/
+FASTAPI/
 │
 ├── app/
-│   └── app.py        # FastAPI application
+│   ├── app.py          # FastAPI backend
+│   ├── db.py           # Database models & session
+│   ├── users.py        # Authentication logic
+│   ├── imagekit.py     # ImageKit config
+│   └── schemas.py      # Pydantic schemas
 │
-├── main.py           # Application entry point
-├── README.md
-├── pyproject.toml
-└── uv.lock
+├── frontend.py         # Streamlit frontend
+├── test.db             # SQLite database
+├── .env                # Environment variables
+└── README.md
 ```
 
 ---
 
-## ▶️ How to Run the Project
+## ⚙️ Setup Instructions
 
-1. Clone the repository:
+### 1️⃣ Clone Repository
 
-   ```bash
-   git clone https://github.com/Shambhavi-Gunda/GramX.git
-   ```
-
-2. Navigate into the project directory:
-
-   ```bash
-   cd GramX
-   ```
-
-3. Install dependencies:
-
-   ```bash
-   python -m pip install fastapi uvicorn
-   ```
-
-4. Run the server:
-
-   ```bash
-   uvicorn app.app:app --host 127.0.0.1 --port 8001
-   ```
-
-5. Open in browser:
-
-   * API: `http://127.0.0.1:8001`
-   * Docs: `http://127.0.0.1:8001/docs`
+```bash
+git clone https://github.com/your-username/gramX.git
+cd gramX
+```
 
 ---
 
-## 📌 Project Status
+### 2️⃣ Create Virtual Environment
 
-🚧 **Under active development**
-New features and improvements are being added regularly.
+```bash
+python -m venv .venv
+.venv\Scripts\activate     # Windows
+source .venv/bin/activate  # Mac/Linux
+```
+
+---
+
+### 3️⃣ Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
-## ✨ Motivation
+### 4️⃣ Start Backend Server
 
-GramX is built as a learning-focused project to understand backend development, REST APIs, and real-world application structure inspired by Instagram.
+```bash
+uvicorn app.app:app --reload --port 8001
+```
+
+Backend runs at:
+
+```
+http://127.0.0.1:8001
+```
+
+Swagger API Docs:
+
+```
+http://127.0.0.1:8001/docs
+```
 
 ---
+
+### 5️⃣ Start Frontend (Streamlit)
+
+Open a new terminal:
+
+```bash
+streamlit run frontend.py
+```
+
+Frontend runs at:
+
+```
+http://localhost:8501
+```
+
+---
+
+## 🔄 Application Flow
+
+```
+User → Streamlit UI → FastAPI API → Database + ImageKit → Response → UI
+```
+
+---
+
+## 🧪 API Endpoints
+
+| Method | Endpoint          | Description       |
+| ------ | ----------------- | ----------------- |
+| POST   | `/auth/register`  | Register new user |
+| POST   | `/auth/jwt/login` | Login             |
+| GET    | `/users/me`       | Get current user  |
+| POST   | `/upload`         | Upload media      |
+| GET    | `/feed`           | Get feed          |
+| DELETE | `/posts/{id}`     | Delete post       |
+
+---
+
+## 🚀 Key Learnings
+
+* End-to-end **full-stack system design**
+* JWT authentication & secure API access
+* Media upload + cloud storage handling
+* Async database operations
+* Frontend-backend integration
+* Debugging real-world production issues
+
+---
+
+## 📌 Future Enhancements
+
+* ❤️ Like system
+* 💬 Comments
+* 👤 User profile pages
+* 🔔 Notifications
+* 📜 Infinite scrolling feed
+* 🌙 Dark mode UI
+
+---
+
+## 👩‍💻 Author
+
+**Shambhavi Gunda**
+Computer Science Student | Full-Stack Developer | ML Enthusiast
+
+---
+
+## ⭐ Support
+
+If you like **gramX**, give it a ⭐ on GitHub — it helps a lot!
+
