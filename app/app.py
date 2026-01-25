@@ -155,3 +155,6 @@ async def delete_post(
     return {"success": True, "message": "Post deleted successfully"}
 
 #to run backend: uvicorn app.app:app --host 127.0.0.1 --port 8001 --reload
+#to push changes to git: git add .
+#git commit -m "final"
+#git push
