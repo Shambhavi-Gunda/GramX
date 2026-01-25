@@ -4,7 +4,7 @@ import base64
 import urllib.parse
 
 # ---------------- CONFIG ----------------
-st.set_page_config(page_title="Simple Social", layout="wide")
+st.set_page_config(page_title="GramX", layout="wide")
 st.success("✅ Streamlit frontend loaded")
 
 BASE_URL = "http://127.0.0.1:8001"
@@ -206,3 +206,5 @@ else:
         feed_page()
     else:
         upload_page()
+
+#to run frontend - streamlit : streamlit run frontend.py
